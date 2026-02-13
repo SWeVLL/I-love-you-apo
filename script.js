@@ -82,52 +82,98 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Setup music player
     setupMusicPlayer();
+
+    // Add scroll reveal animations
+    setupScrollAnimations();
 });
 
-// Create floating hearts and bears
+// Create floating hearts and bears with better distribution
 function createFloatingElements() {
     const container = document.querySelector('.floating-elements');
     
-    // Create hearts
-    config.floatingEmojis.hearts.forEach(heart => {
+    // Create hearts with staggered timing
+    config.floatingEmojis.hearts.forEach((heart, index) => {
         const div = document.createElement('div');
         div.className = 'heart';
         div.innerHTML = heart;
-        setRandomPosition(div);
+        setRandomPosition(div, index);
         container.appendChild(div);
     });
 
-    // Create bears
-    config.floatingEmojis.bears.forEach(bear => {
+    // Create bears with staggered timing
+    config.floatingEmojis.bears.forEach((bear, index) => {
         const div = document.createElement('div');
         div.className = 'bear';
         div.innerHTML = bear;
-        setRandomPosition(div);
+        setRandomPosition(div, index + config.floatingEmojis.hearts.length);
         container.appendChild(div);
     });
 }
 
-// Set random position for floating elements
-function setRandomPosition(element) {
+// Set random position for floating elements with better distribution
+function setRandomPosition(element, index = 0) {
     element.style.left = Math.random() * 100 + 'vw';
-    element.style.animationDelay = Math.random() * 5 + 's';
-    element.style.animationDuration = 10 + Math.random() * 20 + 's';
+    element.style.animationDelay = (Math.random() * 5 + index * 0.2) + 's';
+    element.style.animationDuration = (10 + Math.random() * 20) + 's';
 }
 
-// Function to show next question
+// Setup scroll reveal animations
+function setupScrollAnimations() {
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.animation = 'fadeIn 0.6s ease-out forwards';
+            }
+        });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.question-section').forEach(section => {
+        observer.observe(section);
+    });
+}
+
+// Function to show next question with smooth transition
 function showNextQuestion(questionNumber) {
-    document.querySelectorAll('.question-section').forEach(q => q.classList.add('hidden'));
-    document.getElementById(`question${questionNumber}`).classList.remove('hidden');
+    const sections = document.querySelectorAll('.question-section');
+    sections.forEach(q => {
+        q.style.opacity = '0';
+        setTimeout(() => {
+            q.classList.add('hidden');
+        }, 300);
+    });
+    
+    setTimeout(() => {
+        const nextSection = document.getElementById(`question${questionNumber}`);
+        nextSection.classList.remove('hidden');
+        nextSection.style.opacity = '1';
+    }, 300);
 }
 
 // Function to move the "No" button when clicked
 function moveButton(button) {
-    const x = Math.random() * (window.innerWidth - button.offsetWidth);
-    const y = Math.random() * (window.innerHeight - button.offsetHeight);
+    const padding = 50;
+    const x = Math.random() * (window.innerWidth - button.offsetWidth - padding * 2) + padding;
+    const y = Math.random() * (window.innerHeight - button.offsetHeight - padding * 2) + padding;
     button.style.position = 'fixed';
     button.style.left = x + 'px';
     button.style.top = y + 'px';
+    
+    // Add scale animation
+    button.style.animation = 'none';
+    setTimeout(() => {
+        button.style.animation = 'scaleIn 0.3s ease-out';
+    }, 10);
 }
+
+// Add scaleIn animation
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes scaleIn {
+        from { transform: scale(0.8); }
+        to { transform: scale(1); }
+    }
+`;
+document.head.appendChild(style);
 
 // Love meter functionality
 const loveMeter = document.getElementById('loveMeter');
@@ -137,7 +183,6 @@ const extraLove = document.getElementById('extraLove');
 function setInitialPosition() {
     loveMeter.value = 100;
     loveValue.textContent = 100;
-    loveMeter.style.width = '100%';
 }
 
 loveMeter.addEventListener('input', () => {
@@ -184,21 +229,91 @@ function celebrate() {
     document.getElementById('celebrationMessage').textContent = config.celebration.message;
     document.getElementById('celebrationEmojis').textContent = config.celebration.emojis;
     
+    // Add confetti effect
+    createConfetti();
+    
     // Create heart explosion effect
     createHeartExplosion();
+    
+    // Trigger confetti multiple times
+    setTimeout(() => createConfetti(), 500);
+    setTimeout(() => createConfetti(), 1000);
+}
+
+// Create confetti effect
+function createConfetti() {
+    const colors = ['💞', '💗', '💕', '❤️', '🩷', '🌹', '💖'];
+    for (let i = 0; i < 30; i++) {
+        const confetti = document.createElement('div');
+        confetti.innerHTML = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.position = 'fixed';
+        confetti.style.left = Math.random() * window.innerWidth + 'px';
+        confetti.style.top = '-50px';
+        confetti.style.fontSize = '2rem';
+        confetti.style.zIndex = '999';
+        confetti.style.pointerEvents = 'none';
+        
+        document.body.appendChild(confetti);
+        
+        const duration = 2 + Math.random() * 1;
+        const xMove = (Math.random() - 0.5) * 200;
+        
+        confetti.animate([
+            { 
+                transform: 'translateY(0) translateX(0) rotate(0deg)',
+                opacity: 1 
+            },
+            { 
+                transform: `translateY(${window.innerHeight + 100}px) translateX(${xMove}px) rotate(${Math.random() * 720}deg)`,
+                opacity: 0 
+            }
+        ], {
+            duration: duration * 1000,
+            easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+        });
+        
+        setTimeout(() => confetti.remove(), duration * 1000);
+    }
 }
 
 // Create heart explosion animation
 function createHeartExplosion() {
-    for (let i = 0; i < 50; i++) {
+    for (let i = 0; i < 60; i++) {
         const heart = document.createElement('div');
         const randomHeart = config.floatingEmojis.hearts[Math.floor(Math.random() * config.floatingEmojis.hearts.length)];
         heart.innerHTML = randomHeart;
         heart.className = 'heart';
         document.querySelector('.floating-elements').appendChild(heart);
-        setRandomPosition(heart);
+        
+        const angle = (i / 60) * Math.PI * 2;
+        const distance = 150 + Math.random() * 100;
+        const x = Math.cos(angle) * distance;
+        const y = Math.sin(angle) * distance;
+        
+        heart.style.left = 'calc(50vw + ' + x + 'px)';
+        heart.style.top = 'calc(50vh + ' + y + 'px)';
+        heart.style.animation = 'explodeHeart 1.2s ease-out forwards';
+        heart.style.animationDelay = (Math.random() * 0.3) + 's';
+        
+        setTimeout(() => heart.remove(), 1500);
     }
 }
+
+// Add explodeHeart animation
+const explosionStyle = document.createElement('style');
+explosionStyle.textContent = `
+    @keyframes explodeHeart {
+        0% {
+            transform: scale(0) translate(0, 0);
+            opacity: 1;
+        }
+        100% {
+            transform: scale(1) translate(0, 300px);
+            opacity: 0;
+        }
+    }
+`;
+document.head.appendChild(explosionStyle);
 
 // Music Player Setup
 function setupMusicPlayer() {
@@ -239,4 +354,4 @@ function setupMusicPlayer() {
             musicToggle.textContent = config.music.startText;
         }
     });
-} 
+}
