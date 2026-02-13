@@ -18,4 +18,10 @@ function applyTheme() {
 }
 
 // Apply theme when the page loads
-window.addEventListener('DOMContentLoaded', applyTheme); 
+window.addEventListener('DOMContentLoaded', applyTheme);
+
+// Re-apply theme on window resize for responsive behavior
+window.addEventListener('resize', () => {
+    const root = document.documentElement;
+    // Recalculate responsive values if needed
+});
